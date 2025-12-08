@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="generator" content="ISE EiffelStudio version 25.02.9.8732 - win64">
+<meta name="description" content="SCOOP-compatible file system watcher. Uses Win32 ReadDirectoryChangesW via C wrapper."/>
+<meta name="author" content="Larry Rix"/>
+<meta name="keywords" content="Eiffel class"/>
+<meta name="keywords" content="Eiffel class"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet">
+<title>simple_watcher Contracts</title>
+<link rel="stylesheet" href="../default.css" type="text/css">
+<script type="text/javascript" src="../goto.html"></script>
+</head>
+<body>
+<pre></pre><form class="nav" onsubmit="go_to('../',this.c.value);return false;">
+<div class="nav">
+<a class="nav hierarchy" href="../class_list.html">Classes</a>
+<a class="nav hierarchy" href="../cluster_list.html">Clusters</a>
+<a class="nav hierarchy" href="../cluster_hierarchy.html">Cluster hierarchy</a>
+<a class="nav class" href="simple_watcher_chart.html">Chart</a>
+<a class="nav class" href="simple_watcher_links.html">Relations</a>
+<span class="nav class selected">Contracts</span>
+<span class="nav class goto">Go to: <input name="c" value="simple_watcher"></span>
+</div></form><pre><span class="ekeyword">note</span>
+	<span class="eitag">description</span><span class="esymbol">:</span> <span class="estring">&quot;</span><span class="estring">[</span>
+		<span class="estring">SCOOP-compatible file system watcher.</span>
+		<span class="estring">Uses Win32 ReadDirectoryChangesW via C wrapper.</span>
+	<span class="estring">]</span><span class="estring">&quot;</span>
+	<span class="eitag">author</span><span class="esymbol">:</span> <span class="estring">&quot;Larry Rix&quot;</span>
+	<span class="eitag">date</span><span class="esymbol">:</span> <span class="estring">&quot;$Date$&quot;</span>
+	<span class="eitag">revision</span><span class="esymbol">:</span> <span class="estring">&quot;$Revision$&quot;</span>
+
+<span class="ekeyword">class</span> <span class="ekeyword">interface</span>
+	<a class="eclass" href="../src/simple_watcher_short.html">SIMPLE_WATCHER</a>
+
+<span class="ekeyword">create</span> 
+	<a class="efeature" href="../src/simple_watcher_short.html#f_make">make</a>
+
+<span class="ekeyword">feature</span> <span class="ecomment">--</span><span class="ecomment"> Constants: Watch Flags</span>
+
+	<a name="f_watch_file_name"></a><a class="efeature" href="../src/simple_watcher_short.html#f_watch_file_name">Watch_file_name</a><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a> <span class="esymbol">=</span> <span class="enumber">1</span>
+			<span class="ecomment">--</span><span class="ecomment"> Watch for file name changes (create, delete, rename).</span>
+
+	<a name="f_watch_dir_name"></a><a class="efeature" href="../src/simple_watcher_short.html#f_watch_dir_name">Watch_dir_name</a><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a> <span class="esymbol">=</span> <span class="enumber">2</span>
+			<span class="ecomment">--</span><span class="ecomment"> Watch for directory name changes.</span>
+
+	<a name="f_watch_attributes"></a><a class="efeature" href="../src/simple_watcher_short.html#f_watch_attributes">Watch_attributes</a><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a> <span class="esymbol">=</span> <span class="enumber">4</span>
+			<span class="ecomment">--</span><span class="ecomment"> Watch for attribute changes.</span>
+
+	<a name="f_watch_size"></a><a class="efeature" href="../src/simple_watcher_short.html#f_watch_size">Watch_size</a><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a> <span class="esymbol">=</span> <span class="enumber">8</span>
+			<span class="ecomment">--</span><span class="ecomment"> Watch for size changes.</span>
+
+	<a name="f_watch_last_write"></a><a class="efeature" href="../src/simple_watcher_short.html#f_watch_last_write">Watch_last_write</a><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a> <span class="esymbol">=</span> <span class="enumber">16</span>
+			<span class="ecomment">--</span><span class="ecomment"> Watch for last write time changes.</span>
+
+	<a name="f_watch_security"></a><a class="efeature" href="../src/simple_watcher_short.html#f_watch_security">Watch_security</a><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a> <span class="esymbol">=</span> <span class="enumber">32</span>
+			<span class="ecomment">--</span><span class="ecomment"> Watch for security descriptor changes.</span>
+
+	<a name="f_watch_all"></a><a class="efeature" href="../src/simple_watcher_short.html#f_watch_all">Watch_all</a><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a> <span class="esymbol">=</span> <span class="enumber">63</span>
+			<span class="ecomment">--</span><span class="ecomment"> Watch for all changes.</span>
+	
+<span class="ekeyword">feature</span> <span class="ecomment">--</span><span class="ecomment"> Constants: Event Types</span>
+
+	<a name="f_event_file_added"></a><a class="efeature" href="../src/simple_watcher_short.html#f_event_file_added">Event_file_added</a><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a> <span class="esymbol">=</span> <span class="enumber">1</span>
+			<span class="ecomment">--</span><span class="ecomment"> A file was added.</span>
+
+	<a name="f_event_file_removed"></a><a class="efeature" href="../src/simple_watcher_short.html#f_event_file_removed">Event_file_removed</a><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a> <span class="esymbol">=</span> <span class="enumber">2</span>
+			<span class="ecomment">--</span><span class="ecomment"> A file was removed.</span>
+
+	<a name="f_event_file_modified"></a><a class="efeature" href="../src/simple_watcher_short.html#f_event_file_modified">Event_file_modified</a><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a> <span class="esymbol">=</span> <span class="enumber">3</span>
+			<span class="ecomment">--</span><span class="ecomment"> A file was modified.</span>
+
+	<a name="f_event_file_renamed"></a><a class="efeature" href="../src/simple_watcher_short.html#f_event_file_renamed">Event_file_renamed</a><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a> <span class="esymbol">=</span> <span class="enumber">4</span>
+			<span class="ecomment">--</span><span class="ecomment"> A file was renamed.</span>
+	
+<span class="ekeyword">feature</span> <span class="ecomment">--</span><span class="ecomment"> Status</span>
+
+	<a name="f_is_valid"></a><a class="efeature" href="../src/simple_watcher_short.html#f_is_valid">is_valid</a><span class="esymbol">:</span> <a class="eclass" href="../base/boolean_short.html">BOOLEAN</a>
+			<span class="ecomment">--</span><span class="ecomment"> Is the watcher handle valid?</span>
+
+	<a name="f_is_watching"></a><a class="efeature" href="../src/simple_watcher_short.html#f_is_watching">is_watching</a><span class="esymbol">:</span> <a class="eclass" href="../base/boolean_short.html">BOOLEAN</a>
+			<span class="ecomment">--</span><span class="ecomment"> Is the watcher actively watching?</span>
+
+	<a name="f_watch_path"></a><a class="efeature" href="../src/simple_watcher_short.html#f_watch_path">watch_path</a><span class="esymbol">:</span> <span class="ekeyword">detachable</span> <a class="eclass" href="../base/string_8_short.html">STRING_8</a>
+			<span class="ecomment">--</span><span class="ecomment"> The path being watched.</span>
+
+	<a name="f_last_error"></a><a class="efeature" href="../src/simple_watcher_short.html#f_last_error">last_error</a><span class="esymbol">:</span> <span class="ekeyword">detachable</span> <a class="eclass" href="../base/string_32_short.html">STRING_32</a>
+			<span class="ecomment">--</span><span class="ecomment"> Error message from last failed operation.</span>
+	
+<span class="ekeyword">feature</span> <span class="ecomment">--</span><span class="ecomment"> Operations</span>
+
+	<a name="f_start"></a><a class="efeature" href="../src/simple_watcher_short.html#f_start">start</a>
+			<span class="ecomment">--</span><span class="ecomment"> Start watching for changes.</span>
+		<span class="ekeyword">require</span>
+			<span class="etag">valid</span><span class="esymbol">:</span> <a class="efeature" href="../src/simple_watcher_short.html#f_is_valid">is_valid</a>
+
+	<a name="f_poll"></a><a class="efeature" href="../src/simple_watcher_short.html#f_poll">poll</a><span class="esymbol">:</span> <span class="ekeyword">detachable</span> <a class="eclass" href="../src/simple_watch_event_short.html">SIMPLE_WATCH_EVENT</a>
+			<span class="ecomment">--</span><span class="ecomment"> Check for a change event without blocking.</span>
+			<span class="ecomment">--</span><span class="ecomment"> Returns Void if no event is pending.</span>
+		<span class="ekeyword">require</span>
+			<span class="etag">valid</span><span class="esymbol">:</span> <a class="efeature" href="../src/simple_watcher_short.html#f_is_valid">is_valid</a>
+			<span class="etag">watching</span><span class="esymbol">:</span> <a class="efeature" href="../src/simple_watcher_short.html#f_is_watching">is_watching</a>
+
+	<a name="f_wait"></a><a class="efeature" href="../src/simple_watcher_short.html#f_wait">wait</a> <span class="esymbol">(</span><span class="elocal">a_timeout_ms</span><span class="esymbol">:</span> <a class="eclass" href="../base/integer_32_short.html">INTEGER_32</a><span class="esymbol">)</span><span class="esymbol">:</span> <span class="ekeyword">detachable</span> <a class="eclass" href="../src/simple_watch_event_short.html">SIMPLE_WATCH_EVENT</a>
+			<span class="ecomment">--</span><span class="ecomment"> Wait for a change event with timeout (milliseconds).</span>
+			<span class="ecomment">--</span><span class="ecomment"> Use -1 for infinite wait.</span>
+			<span class="ecomment">--</span><span class="ecomment"> Returns Void on timeout.</span>
+		<span class="ekeyword">require</span>
+			<span class="etag">valid</span><span class="esymbol">:</span> <a class="efeature" href="../src/simple_watcher_short.html#f_is_valid">is_valid</a>
+			<span class="etag">watching</span><span class="esymbol">:</span> <a class="efeature" href="../src/simple_watcher_short.html#f_is_watching">is_watching</a>
+
+	<a name="f_close"></a><a class="efeature" href="../src/simple_watcher_short.html#f_close">close</a>
+			<span class="ecomment">--</span><span class="ecomment"> Stop watching and release resources.</span>
+		<span class="ekeyword">ensure</span>
+			<span class="etag">closed</span><span class="esymbol">:</span> <a class="efeature" href="../src/simple_watcher_short.html#f_handle">handle</a> <span class="esymbol">=</span> <a class="efeature" href="../base/any_short.html#f_default_pointer">default_pointer</a>
+	
+<span class="ekeyword">feature</span> <span class="ecomment">--</span><span class="ecomment"> Status Report</span>
+
+	<a name="f_last_start_succeeded"></a><a class="efeature" href="../src/simple_watcher_short.html#f_last_start_succeeded">last_start_succeeded</a><span class="esymbol">:</span> <a class="eclass" href="../base/boolean_short.html">BOOLEAN</a>
+			<span class="ecomment">--</span><span class="ecomment"> Did the last start operation succeed?</span>
+	
+<span class="ekeyword">end</span> <span class="ecomment">--</span> <span class="ecomment">class </span><a class="eclass" href="../src/simple_watcher_short.html">SIMPLE_WATCHER</a></pre><form class="nav" onsubmit="go_to('../',this.c.value);return false;">
+<div class="nav">
+<a class="nav hierarchy" href="../class_list.html">Classes</a>
+<a class="nav hierarchy" href="../cluster_list.html">Clusters</a>
+<a class="nav hierarchy" href="../cluster_hierarchy.html">Cluster hierarchy</a>
+<a class="nav class" href="simple_watcher_chart.html">Chart</a>
+<a class="nav class" href="simple_watcher_links.html">Relations</a>
+<span class="nav class selected">Contracts</span>
+<span class="nav class goto">Go to: <input name="c" value="simple_watcher"></span>
+</div></form><pre></pre>
+<p style="text-align:center;">Generated by <a href="http://www.eiffel.com">ISE EiffelStudio</a></p>
+</body>
+</html>
+
