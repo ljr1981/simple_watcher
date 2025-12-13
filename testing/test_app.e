@@ -4,7 +4,7 @@ note
 	revision: "$Revision$"
 
 class
-	APPLICATION
+	TEST_APP
 
 create
 	make
@@ -14,7 +14,7 @@ feature -- Initialization
 	make
 			-- Run tests.
 		local
-			l_tests: TEST_SIMPLE_WATCHER
+			l_tests: LIB_TESTS
 			l_passed, l_failed: INTEGER
 		do
 			print ("Testing SIMPLE_WATCHER...%N%N")
