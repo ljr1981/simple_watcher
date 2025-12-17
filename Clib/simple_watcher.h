@@ -1,12 +1,19 @@
 /*
- * simple_watcher.h - File system watcher for Eiffel
+ * simple_watcher.h - Cross-platform File system watcher for Eiffel
+ *
+ * Windows: Uses ReadDirectoryChangesW with overlapped I/O
+ * Linux: Uses inotify
+ * macOS: Uses FSEvents (TODO - not implemented yet)
+ *
  * Copyright (c) 2025 Larry Rix - MIT License
  */
 
 #ifndef SIMPLE_WATCHER_H
 #define SIMPLE_WATCHER_H
 
+#if defined(_WIN32) || defined(EIF_WINDOWS)
 #include <windows.h>
+#endif
 
 /* Change event types */
 #define SWE_FILE_ADDED      1
@@ -30,7 +37,8 @@ typedef struct {
     char* old_filename;  /* For rename events */
 } sw_event;
 
-/* Watcher handle structure */
+/* Watcher handle structure - Platform specific */
+#if defined(_WIN32) || defined(EIF_WINDOWS)
 typedef struct {
     HANDLE directory_handle;
     HANDLE event_handle;
@@ -43,6 +51,22 @@ typedef struct {
     sw_event* pending_event;
     char* error_message;
 } sw_watcher;
+#else
+/* Linux inotify implementation */
+typedef struct {
+    int inotify_fd;           /* inotify file descriptor */
+    int watch_descriptor;     /* watch descriptor for the directory */
+    char* watch_path;
+    int watch_subtree;        /* Note: inotify doesn't natively support subtree */
+    int filter;               /* Our SWF_* flags */
+    unsigned char buffer[8192];
+    int buffer_len;           /* Bytes in buffer */
+    int buffer_pos;           /* Current position in buffer */
+    int is_watching;
+    sw_event* pending_event;
+    char* error_message;
+} sw_watcher;
+#endif
 
 /* Create a watcher for a directory.
  * path: directory to watch

@@ -1,5 +1,10 @@
 /*
- * simple_watcher.c - File system watcher for Eiffel
+ * simple_watcher.c - Cross-platform File system watcher for Eiffel
+ *
+ * Windows: Uses ReadDirectoryChangesW with overlapped I/O
+ * Linux: Uses inotify
+ * macOS: Uses FSEvents (TODO - not implemented yet)
+ *
  * Copyright (c) 2025 Larry Rix - MIT License
  */
 
@@ -8,6 +13,9 @@
 #include <string.h>
 
 static char last_error_msg[512] = {0};
+
+#if defined(_WIN32) || defined(EIF_WINDOWS)
+/* ============ WINDOWS IMPLEMENTATION ============ */
 
 static void store_last_error(void) {
     DWORD err = GetLastError();
@@ -260,3 +268,196 @@ void sw_free_event(sw_event* event) {
         free(event);
     }
 }
+
+#else
+/* ============ LINUX INOTIFY IMPLEMENTATION ============ */
+/* Note: macOS FSEvents not yet implemented - coming Friday with Mac Mini */
+
+#include <unistd.h>
+#include <errno.h>
+#include <sys/inotify.h>
+#include <poll.h>
+#include <fcntl.h>
+
+static void store_last_error(void) {
+    snprintf(last_error_msg, sizeof(last_error_msg) - 1, "%s", strerror(errno));
+}
+
+/* Convert our SWF_* flags to inotify mask */
+static uint32_t flags_to_inotify_mask(int flags) {
+    uint32_t mask = 0;
+    if (flags & SWF_FILE_NAME)  mask |= IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO;
+    if (flags & SWF_DIR_NAME)   mask |= IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO | IN_ISDIR;
+    if (flags & SWF_ATTRIBUTES) mask |= IN_ATTRIB;
+    if (flags & SWF_SIZE)       mask |= IN_MODIFY;
+    if (flags & SWF_LAST_WRITE) mask |= IN_MODIFY | IN_CLOSE_WRITE;
+    if (flags & SWF_SECURITY)   mask |= IN_ATTRIB;
+    return mask;
+}
+
+/* Convert inotify mask to our event type */
+static int inotify_mask_to_event_type(uint32_t mask) {
+    if (mask & IN_CREATE)      return SWE_FILE_ADDED;
+    if (mask & IN_DELETE)      return SWE_FILE_REMOVED;
+    if (mask & IN_MOVED_FROM)  return SWE_FILE_RENAMED;
+    if (mask & IN_MOVED_TO)    return SWE_FILE_RENAMED;
+    if (mask & (IN_MODIFY | IN_CLOSE_WRITE | IN_ATTRIB))
+                               return SWE_FILE_MODIFIED;
+    return SWE_FILE_MODIFIED;
+}
+
+sw_watcher* sw_create(const char* path, int watch_subtree, int flags) {
+    sw_watcher* w;
+    uint32_t mask;
+
+    w = (sw_watcher*)malloc(sizeof(sw_watcher));
+    if (!w) return NULL;
+    memset(w, 0, sizeof(sw_watcher));
+
+    w->watch_path = strdup(path);
+    w->watch_subtree = watch_subtree;
+    w->filter = flags;
+    w->inotify_fd = -1;
+    w->watch_descriptor = -1;
+
+    /* Create inotify instance */
+    w->inotify_fd = inotify_init1(IN_NONBLOCK);
+    if (w->inotify_fd < 0) {
+        store_last_error();
+        w->error_message = strdup(last_error_msg);
+        return w;
+    }
+
+    /* Add watch */
+    mask = flags_to_inotify_mask(flags);
+    w->watch_descriptor = inotify_add_watch(w->inotify_fd, path, mask);
+    if (w->watch_descriptor < 0) {
+        store_last_error();
+        w->error_message = strdup(last_error_msg);
+        close(w->inotify_fd);
+        w->inotify_fd = -1;
+        return w;
+    }
+
+    /* Note: watch_subtree is requested but inotify doesn't natively support it.
+     * A full implementation would recursively add watches for subdirectories.
+     * For now, we only watch the top-level directory. */
+    if (watch_subtree) {
+        /* TODO: Recursively add watches for subdirectories */
+    }
+
+    return w;
+}
+
+int sw_start(sw_watcher* watcher) {
+    if (!watcher || watcher->inotify_fd < 0) {
+        return 0;
+    }
+    watcher->is_watching = 1;
+    return 1;
+}
+
+static sw_event* read_next_event(sw_watcher* watcher) {
+    struct inotify_event* event;
+    sw_event* result;
+
+    if (watcher->buffer_pos >= watcher->buffer_len) {
+        /* Need to read more data */
+        ssize_t len = read(watcher->inotify_fd, watcher->buffer, sizeof(watcher->buffer));
+        if (len <= 0) {
+            return NULL;
+        }
+        watcher->buffer_len = (int)len;
+        watcher->buffer_pos = 0;
+    }
+
+    event = (struct inotify_event*)(watcher->buffer + watcher->buffer_pos);
+    watcher->buffer_pos += sizeof(struct inotify_event) + event->len;
+
+    result = (sw_event*)malloc(sizeof(sw_event));
+    if (!result) return NULL;
+    memset(result, 0, sizeof(sw_event));
+
+    result->event_type = inotify_mask_to_event_type(event->mask);
+    if (event->len > 0) {
+        result->filename = strdup(event->name);
+    }
+
+    return result;
+}
+
+sw_event* sw_poll(sw_watcher* watcher) {
+    if (!watcher || !watcher->is_watching || watcher->inotify_fd < 0) {
+        return NULL;
+    }
+    return read_next_event(watcher);
+}
+
+sw_event* sw_wait(sw_watcher* watcher, int timeout_ms) {
+    struct pollfd pfd;
+    int ret;
+    sw_event* event;
+
+    if (!watcher || !watcher->is_watching || watcher->inotify_fd < 0) {
+        return NULL;
+    }
+
+    /* First check if there's buffered data */
+    if (watcher->buffer_pos < watcher->buffer_len) {
+        return read_next_event(watcher);
+    }
+
+    /* Wait for data */
+    pfd.fd = watcher->inotify_fd;
+    pfd.events = POLLIN;
+    ret = poll(&pfd, 1, timeout_ms);
+
+    if (ret <= 0) {
+        return NULL;
+    }
+
+    return read_next_event(watcher);
+}
+
+int sw_is_watching(sw_watcher* watcher) {
+    return watcher ? watcher->is_watching : 0;
+}
+
+const char* sw_get_path(sw_watcher* watcher) {
+    return watcher ? watcher->watch_path : NULL;
+}
+
+const char* sw_get_error(sw_watcher* watcher) {
+    return watcher ? watcher->error_message : NULL;
+}
+
+void sw_close(sw_watcher* watcher) {
+    if (watcher) {
+        if (watcher->watch_descriptor >= 0 && watcher->inotify_fd >= 0) {
+            inotify_rm_watch(watcher->inotify_fd, watcher->watch_descriptor);
+        }
+        if (watcher->inotify_fd >= 0) {
+            close(watcher->inotify_fd);
+        }
+        if (watcher->watch_path) {
+            free(watcher->watch_path);
+        }
+        if (watcher->error_message) {
+            free(watcher->error_message);
+        }
+        if (watcher->pending_event) {
+            sw_free_event(watcher->pending_event);
+        }
+        free(watcher);
+    }
+}
+
+void sw_free_event(sw_event* event) {
+    if (event) {
+        if (event->filename) free(event->filename);
+        if (event->old_filename) free(event->old_filename);
+        free(event);
+    }
+}
+
+#endif /* _WIN32 */
